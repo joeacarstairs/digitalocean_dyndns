@@ -19,7 +19,7 @@ IP=""
 if [ "$#" == "1" ]; then
     IP=$1
 else
-    IP=`curl -4 icanhazip.com 2> /dev/null` 
+    IP=`curl -4 $DIGITALOCEAN_DOMAIN 2> /dev/null`
 fi
 
 # If $IP does not look like a valid address then complain and exit.
