@@ -2,7 +2,7 @@
 
 ip_version="$1"
 if [ -z "${ip_version:-}" ] || ([ "$ip_version" != 4 ] && [ "$ip_version" != 6 ]); then
-    echo "Usage: get_ip_addr <4|6>" &>2
+    echo "Usage: get_ip_addr <4|6>" >&2
     exit 1
 fi
 
@@ -15,13 +15,13 @@ set -eu
 CONN_NAME=${CONN_NAME:-nevis}
 conn_device_name="$(nmcli --fields NAME,DEVICE con show | grep ^$CONN_NAME | sed 's/\s\+/ /g' | cut -d' ' -f 2)"
 if [ -z "${conn_device_name:-}" ]; then
-    echo "Could not find the connection device name for connection: \"$CONN_NAME\"" &>2
+    echo "Could not find the connection device name for connection: \"$CONN_NAME\"" >&2
     exit 1
 fi
 
 device_line_no="$(ip addr | grep -En ^[0-9]+:\ $conn_device_name | cut -d':' -f 1)"
 if [ -z "${device_line_no:-}" ]; then
-    echo "Could not find device: \"$conn_device_name\" in output of ip addr" &>2
+    echo "Could not find device: \"$conn_device_name\" in output of ip addr" >&2
     exit 1
 fi
 

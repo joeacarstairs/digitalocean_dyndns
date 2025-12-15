@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 # Work with DigitalOcean api to update "A" and "AAAA" records for a domain.
 # Store DigitalOcean API token in file : DIGITALOCEAN_TOKEN 
@@ -6,20 +6,20 @@
 
 ip_version="$1"
 if [ -z "${ip_version:-}" ] || ([ "$ip_version" != 4 ] && [ "$ip_version" != 6 ]); then
-    echo "Error: no valid IP version provided" &>2
-    echo "Usage: dyndns.bash <4|6>" &>2
-    exit 1
-fi
-
-IP="$(./get_ip_addr.sh $ip_version)"
-if [ -z "$IP" ]; then
-    echo "Error: could not find IP address" &>2
+    echo "Error: no valid IP version provided" >&2
+    echo "Usage: dyndns.bash <4|6>" >&2
     exit 1
 fi
 
 SCRIPT="$0"
 SCRIPT_DIR=$(cd "${SCRIPT%/*}" && pwd )
 SCRIPT_NAME=${SCRIPT##*/}
+
+IP="$($SCRIPT_DIR/get_ip_addr.sh $ip_version)"
+if [ -z "$IP" ]; then
+    echo "Error: could not find IP address" >&2
+    exit 1
+fi
 
 REPEAT_CHECK_DIR=$SCRIPT_DIR
 REPEAT_CHECK_A=$REPEAT_CHECK_DIR/REPEAT_CHECK_A
