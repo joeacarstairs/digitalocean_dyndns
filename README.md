@@ -21,7 +21,8 @@ Write this to `DIGITALOCEAN_TOKEN`.
 The script should now run. Try it out:
 
 ```sh
-./dyndns.sh
+./dyndns.sh 4 # for IPv$
+./dyndns.sh 6 # for IPv$
 ```
 
 Go to the control panel in DigitalOcean for your domain, and check the A and
@@ -40,3 +41,10 @@ Wait one minute, and check the logs. If you want to see that it works, delete
 the REPEAT_CHECK_A and REPEAT_CHECK_AAAA files and wait for the script to run
 again. You may also want to have an MTA set up, as cron will try to send any
 unhandled output to your inbox.
+
+If you want to use this script for more than one domain, you can supply a domain
+name as a second argument. For example:
+
+```sh
+./dyndns.sh 4 example.com
+```

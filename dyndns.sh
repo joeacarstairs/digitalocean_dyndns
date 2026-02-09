@@ -7,7 +7,7 @@
 ip_version="$1"
 if [ -z "${ip_version:-}" ] || ([ "$ip_version" != 4 ] && [ "$ip_version" != 6 ]); then
     echo "Error: no valid IP version provided" >&2
-    echo "Usage: dyndns.bash <4|6>" >&2
+    echo "Usage: dyndns.bash <4|6> [domain]" >&2
     exit 1
 fi
 
@@ -26,7 +26,7 @@ REPEAT_CHECK_A=$REPEAT_CHECK_DIR/REPEAT_CHECK_A
 REPEAT_CHECK_AAAA=$REPEAT_CHECK_DIR/REPEAT_CHECK_AAAA
 REPEAT_CHECK="$([ $ip_version = 4 ] && echo $REPEAT_CHECK_A || echo $REPEAT_CHECK_AAAA)"
 
-DIGITALOCEAN_DOMAIN=`cat $SCRIPT_DIR/DIGITALOCEAN_DOMAIN`
+DIGITALOCEAN_DOMAIN=${2:-`cat $SCRIPT_DIR/DIGITALOCEAN_DOMAIN`}
 DIGITALOCEAN_TOKEN=`cat $SCRIPT_DIR/DIGITALOCEAN_TOKEN`
 
 get_a_record_ids() {
