@@ -21,26 +21,34 @@ if [ -z "$IP" ]; then
     exit 1
 fi
 
-REPEAT_CHECK_DIR=$SCRIPT_DIR
-REPEAT_CHECK_A=$REPEAT_CHECK_DIR/REPEAT_CHECK_A
-REPEAT_CHECK_AAAA=$REPEAT_CHECK_DIR/REPEAT_CHECK_AAAA
-REPEAT_CHECK="$([ $ip_version = 4 ] && echo $REPEAT_CHECK_A || echo $REPEAT_CHECK_AAAA)"
-
-DIGITALOCEAN_DOMAIN=${2:-`cat $SCRIPT_DIR/DIGITALOCEAN_DOMAIN`}
 DIGITALOCEAN_TOKEN=`cat $SCRIPT_DIR/DIGITALOCEAN_TOKEN`
+DOMAIN=${2:-`cat $SCRIPT_DIR/DIGITALOCEAN_DOMAIN`}
+SUBDOMAIN=`echo $DOMAIN | sed "s/[^.]\+\.[^.]\+$//g"`
+if [ -z "$SUBDOMAIN" ]; then
+    SUBDOMAIN="@"
+    ROOT_DOMAIN=$DOMAIN
+else
+    SUBDOMAIN=`echo $SUBDOMAIN | sed "s/\.$//g"`
+    ROOT_DOMAIN=`echo $DOMAIN | sed "s/^${SUBDOMAIN}\.//g"`
+fi
+
+REPEAT_CHECK_DIR=$SCRIPT_DIR
+REPEAT_CHECK_A=$REPEAT_CHECK_DIR/REPEAT_CHECK_${DOMAIN}_A
+REPEAT_CHECK_AAAA=$REPEAT_CHECK_DIR/REPEAT_CHECK_${DOMAIN}_AAAA
+REPEAT_CHECK="$([ $ip_version = 4 ] && echo $REPEAT_CHECK_A || echo $REPEAT_CHECK_AAAA)"
 
 get_a_record_ids() {
     curl -X GET \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
-      "https://api.digitalocean.com/v2/domains/$DIGITALOCEAN_DOMAIN/records" 2> /dev/null | jq '.domain_records |  map(select(.type == "A" and .name == "@")) | map(.id) | .[]'
+      "https://api.digitalocean.com/v2/domains/$ROOT_DOMAIN/records" 2> /dev/null | jq '.domain_records |  map(select(.type == "A" and .name == "$SUBDOMAIN")) | map(.id) | .[]'
 }
 
 get_aaaa_record_ids() {
     curl -X GET \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
-      "https://api.digitalocean.com/v2/domains/$DIGITALOCEAN_DOMAIN/records" 2> /dev/null | jq '.domain_records |  map(select(.type == "AAAA" and .name == "@")) | map(.id) | .[]'
+      "https://api.digitalocean.com/v2/domains/$ROOT_DOMAIN/records" 2> /dev/null | jq '.domain_records |  map(select(.type == "AAAA" and .name == "$SUBDOMAIN")) | map(.id) | .[]'
 }
 
 add_a_record() {
@@ -48,7 +56,7 @@ add_a_record() {
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
       -d "{\"type\":\"A\"         \
-          ,\"name\":\"@\"         \
+          ,\"name\":\"$SUBDOMAIN\"         \
           ,\"data\":\"$IP\"       \
           ,\"priority\":null      \
           ,\"port\":null          \
@@ -57,7 +65,7 @@ add_a_record() {
           ,\"flags\":null         \
           ,\"tag\":null           \
           }"                      \
-      "https://api.digitalocean.com/v2/domains/$DIGITALOCEAN_DOMAIN/records" 2> /dev/null | jq '.domain_record.id'
+      "https://api.digitalocean.com/v2/domains/$ROOT_DOMAIN/records" 2> /dev/null | jq '.domain_record.id'
 }
 
 add_aaaa_record() {
@@ -65,7 +73,7 @@ add_aaaa_record() {
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
       -d "{\"type\":\"AAAA\"         \
-          ,\"name\":\"@\"         \
+          ,\"name\":\"$SUBDOMAIN\"         \
           ,\"data\":\"$IP\"       \
           ,\"priority\":null      \
           ,\"port\":null          \
@@ -74,15 +82,15 @@ add_aaaa_record() {
           ,\"flags\":null         \
           ,\"tag\":null           \
           }"                      \
-      "https://api.digitalocean.com/v2/domains/$DIGITALOCEAN_DOMAIN/records" 2> /dev/null | jq '.domain_record.id'
+      "https://api.digitalocean.com/v2/domains/$ROOT_DOMAIN/records" 2> /dev/null | jq '.domain_record.id'
 }
 
 delete_record_by_id() {
-    echo deleting existing A/AAAA record for $DIGITALOCEAN_DOMAIN
+    echo deleting existing A/AAAA record for $DOMAIN
     curl -X DELETE \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
-      "https://api.digitalocean.com/v2/domains/$DIGITALOCEAN_DOMAIN/records/$1" > /dev/null 2>&1
+      "https://api.digitalocean.com/v2/domains/$ROOT_DOMAIN/records/$1" > /dev/null 2>&1
 }
 
 replace_a_records() {
@@ -92,10 +100,10 @@ replace_a_records() {
 
     new_record_id=`add_a_record`
     if [ "$new_record_id" = "null" ] ; then
-        echo unable to add new A record for $DIGITALOCEAN_DOMAIN with value: $IP
+        echo unable to add new A record for $DOMAIN with value: $IP
         return 1
     fi
-    echo added new A record for $DIGITALOCEAN_DOMAIN with value: $IP
+    echo added new A record for $DOMAIN with value: $IP
 }
 
 
@@ -106,10 +114,10 @@ replace_aaaa_records() {
 
     new_record_id=`add_aaaa_record`
     if [ "$new_record_id" = "null" ] ; then
-        echo unable to add new AAAA record for $DIGITALOCEAN_DOMAIN with value: $IP
+        echo unable to add new AAAA record for $DOMAIN with value: $IP
         return 1
     fi
-    echo added new AAAA record for $DIGITALOCEAN_DOMAIN with value: $IP
+    echo added new AAAA record for $DOMAIN with value: $IP
 }
 
 replace_records() {
