@@ -1,5 +1,7 @@
 # digitalocean_dyndns
 
+Moved! See: https://git.joeac.net/digitalocean_dyndns.git
+
 Forked from [dc25/digitalocean_dyndns](https://github.com/dc25/digitalocean_dyndns).
 
 This script automatically keeps your DNS records for a HTTPS website working
